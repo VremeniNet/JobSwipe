@@ -5,10 +5,11 @@ import {
 	Navigate,
 } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import JobSeekerPage from './pages/JobseekerPage'
+import JobSeekerPage from './pages/JobSeekerPage'
 import EmployerPage from './pages/EmployerPage'
-import LoginPage from './pages/LoginPage'
-import RegisterPage from './pages/RegisterPage'
+import AuthPage from './pages/AuthPage'
+import SelectRolePage from './pages/SelectRolePage'
+import JobSeekerFormPage from './pages/JobSeekerFormPage'
 
 const App = () => {
 	const [token, setToken] = useState<string | null>(null)
@@ -24,8 +25,9 @@ const App = () => {
 		<Router>
 			<Routes>
 				{/* Публичные маршруты */}
-				<Route path='/login' element={<LoginPage setToken={setToken} />} />
-				<Route path='/register' element={<RegisterPage />} />
+				<Route path='/auth' element={<AuthPage setToken={setToken} />} />
+				<Route path='/select-role' element={<SelectRolePage />} />
+				<Route path='/register/job-seeker' element={<JobSeekerFormPage />} />
 
 				{/* Приватные маршруты */}
 				<Route
@@ -38,7 +40,7 @@ const App = () => {
 				/>
 
 				{/* По умолчанию */}
-				<Route path='*' element={<Navigate to='/login' />} />
+				<Route path='*' element={<Navigate to='/auth' />} />
 			</Routes>
 		</Router>
 	)
