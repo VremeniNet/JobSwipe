@@ -7,13 +7,6 @@ export default function SelectRolePage() {
 	const navigate = useNavigate()
 	const [role, setRole] = useState<'job_seeker' | 'employer' | null>(null)
 
-	const handleContinue = () => {
-		if (role === 'job_seeker') {
-			navigate('/register/job-seeker')
-		}
-		// позже добавить ветку для employer
-	}
-
 	return (
 		<Container
 			maxWidth='sm'

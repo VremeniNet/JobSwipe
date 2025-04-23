@@ -6,7 +6,8 @@ import {
 	TextField,
 	Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import DeleteIcon from '@mui/icons-material/Delete'
+import { useState, useRef } from 'react'
 import JobSeekerSkillsStep from '../components/JobSeekerSkillsStep'
 
 export default function JobSeekerProfileForm() {
@@ -23,6 +24,8 @@ export default function JobSeekerProfileForm() {
 		experience: '',
 		resume: null as File | null,
 	})
+
+	const fileInputRef = useRef<HTMLInputElement | null>(null)
 
 	const [step, setStep] = useState(1)
 	const [selectedSkills, setSelectedSkills] = useState<string[]>([])
@@ -191,6 +194,7 @@ export default function JobSeekerProfileForm() {
 									>
 										Загрузите резюме
 										<input
+											ref={fileInputRef}
 											type='file'
 											hidden
 											accept='.pdf,.doc,.docx'
@@ -199,9 +203,24 @@ export default function JobSeekerProfileForm() {
 									</Button>
 
 									{formData.resume && (
-										<Typography variant='body2' sx={{ fontStyle: 'italic' }}>
-											{formData.resume.name}
-										</Typography>
+										<>
+											<Typography variant='body2' sx={{ fontStyle: 'italic' }}>
+												{formData.resume.name}
+											</Typography>
+											<DeleteIcon
+												onClick={() => {
+													setFormData(prev => ({ ...prev, resume: null }))
+													if (fileInputRef.current) {
+														fileInputRef.current.value = '' // сброс значения
+													}
+												}}
+												sx={{
+													color: '#888',
+													cursor: 'pointer',
+													'&:hover': { color: '#555' },
+												}}
+											/>
+										</>
 									)}
 								</Box>
 
