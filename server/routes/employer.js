@@ -1,7 +1,10 @@
 const express = require('express')
 const router = express.Router()
-const pool = require('../db.js') // Пул подключения к базе данных
+const pool = require('../db.js')
 const authenticateToken = require('../middleware/authenticateToken')
+const multer = require('multer')
+
+const upload = multer({ storage: multer.memoryStorage() })
 
 // Middleware для проверки роли работодателя
 function checkEmployer(req, res, next) {
@@ -16,22 +19,43 @@ function checkEmployer(req, res, next) {
 /**
  * Создать новую вакансию
  * POST /api/employer/vacancies
- * Тело запроса: { title, description, requirements, location }
+ * Тело запроса: FormData (с фото)
  */
 router.post(
 	'/vacancies',
 	authenticateToken,
 	checkEmployer,
+	upload.single('photo'), // Загрузка фото
 	async (req, res) => {
 		try {
 			const employerId = req.user.userId
-			const { title, description, requirements, location } = req.body
+			const {
+				position_name,
+				profession_id,
+				position_id,
+				salary,
+				description,
+				requirements,
+			} = req.body
+
+			const photoBuffer = req.file ? req.file.buffer : null
+
 			const result = await pool.query(
-				`INSERT INTO vacancies (employer_id, title, description, requirements, location)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-				[employerId, title, description, requirements, location]
+				`INSERT INTO vacancies (employer_id, position_name, profession_id, position_id, salary, description, requirements, photo)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+				RETURNING *`,
+				[
+					employerId,
+					position_name,
+					profession_id,
+					position_id,
+					salary,
+					description,
+					requirements,
+					photoBuffer,
+				]
 			)
+
 			res.status(201).json(result.rows[0])
 		} catch (error) {
 			console.error('Ошибка при создании вакансии:', error)
@@ -88,7 +112,7 @@ router.get(
 /**
  * Обновить вакансию
  * PUT /api/employer/vacancies/:id
- * Тело запроса: { title, description, requirements, location }
+ * Тело запроса: { position_name, profession_id, position_id, salary, description, requirements }
  */
 router.put(
 	'/vacancies/:id',
@@ -98,23 +122,44 @@ router.put(
 		try {
 			const employerId = req.user.userId
 			const vacancyId = req.params.id
-			const { title, description, requirements, location } = req.body
+			const {
+				position_name,
+				profession_id,
+				position_id,
+				salary,
+				description,
+				requirements,
+			} = req.body
+
 			const result = await pool.query(
 				`UPDATE vacancies
-       SET title = $1,
-           description = $2,
-           requirements = $3,
-           location = $4,
-           updated_at = NOW()
-       WHERE id = $5 AND employer_id = $6
-       RETURNING *`,
-				[title, description, requirements, location, vacancyId, employerId]
+				SET position_name = $1,
+					profession_id = $2,
+					position_id = $3,
+					salary = $4,
+					description = $5,
+					requirements = $6,
+					updated_at = NOW()
+				WHERE id = $7 AND employer_id = $8
+				RETURNING *`,
+				[
+					position_name,
+					profession_id,
+					position_id,
+					salary,
+					description,
+					requirements,
+					vacancyId,
+					employerId,
+				]
 			)
+
 			if (result.rows.length === 0) {
 				return res
 					.status(404)
 					.json({ error: 'Вакансия не найдена или нет доступа' })
 			}
+
 			res.json(result.rows[0])
 		} catch (error) {
 			console.error('Ошибка при обновлении вакансии:', error)
@@ -153,16 +198,14 @@ router.delete(
 )
 
 /**
- * Работодатель ставит "лайк" карточке кандидата
+ * Лайк кандидата работодателем
  * POST /api/employer/like
- * Тело запроса: { job_seeker_id, vacancy_id }
  */
 router.post('/like', authenticateToken, checkEmployer, async (req, res) => {
 	try {
 		const employerId = req.user.userId
 		const { job_seeker_id, vacancy_id } = req.body
 
-		// Проверяем, что вакансия принадлежит работодателю
 		const vacancyResult = await pool.query(
 			`SELECT * FROM vacancies WHERE id = $1 AND employer_id = $2`,
 			[vacancy_id, employerId]
@@ -173,15 +216,12 @@ router.post('/like', authenticateToken, checkEmployer, async (req, res) => {
 				.json({ error: 'Вакансия не принадлежит работодателю' })
 		}
 
-		// Добавляем запись в таблицу лайков работодателя
 		const result = await pool.query(
 			`INSERT INTO employer_likes (employer_id, job_seeker_id, vacancy_id)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
+			VALUES ($1, $2, $3)
+			RETURNING *`,
 			[employerId, job_seeker_id, vacancy_id]
 		)
-
-		// Дополнительно можно проверить взаимный лайк и создать чат
 
 		res.status(201).json(result.rows[0])
 	} catch (error) {
@@ -191,7 +231,7 @@ router.post('/like', authenticateToken, checkEmployer, async (req, res) => {
 })
 
 /**
- * Получить список чатов для работодателя
+ * Получить чаты работодателя
  * GET /api/employer/chats
  */
 router.get('/chats', authenticateToken, checkEmployer, async (req, res) => {

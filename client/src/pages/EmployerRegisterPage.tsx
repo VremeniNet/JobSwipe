@@ -9,16 +9,15 @@ import {
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { useState } from 'react'
-import EmployerJobFormStep from '../components/EmployerJobFormStep'
+import { registerEmployerProfile } from '../api/employer' // импорт функции API
+import { useNavigate } from 'react-router-dom'
 
 export default function EmployerRegisterPage() {
-	const [step, setStep] = useState(1)
-
+	const navigate = useNavigate()
 	const [formData, setFormData] = useState({
 		companyName: '',
 		website: '',
 	})
-
 	const [photos, setPhotos] = useState<File[]>([])
 	const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
 
@@ -30,15 +29,36 @@ export default function EmployerRegisterPage() {
 	const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files) {
 			const newPhotos = Array.from(e.target.files)
-			setPhotos(prev => [...prev, ...newPhotos])
+			setPhotos(newPhotos.slice(0, 1)) // Только 1 фото (если нужно ограничение)
 			const newPreviews = newPhotos.map(file => URL.createObjectURL(file))
-			setPhotoPreviews(prev => [...prev, ...newPreviews])
+			setPhotoPreviews(newPreviews.slice(0, 1))
 		}
 	}
 
-	const handleRemovePhoto = (index: number) => {
-		setPhotos(prev => prev.filter((_, i) => i !== index))
-		setPhotoPreviews(prev => prev.filter((_, i) => i !== index))
+	const handleRemovePhoto = () => {
+		setPhotos([])
+		setPhotoPreviews([])
+	}
+
+	const handleSubmit = async () => {
+		try {
+			const formDataToSend = new FormData()
+			formDataToSend.append('company_name', formData.companyName)
+			formDataToSend.append('website', formData.website)
+			if (photos[0]) {
+				formDataToSend.append('photo', photos[0])
+			}
+
+			await registerEmployerProfile(formDataToSend)
+
+			console.log('Профиль компании успешно создан')
+
+			navigate('/employer/create-job')
+
+			// редирект или сообщение об успехе
+		} catch (error) {
+			console.error('Ошибка при отправке профиля работодателя:', error)
+		}
 	}
 
 	return (
@@ -67,97 +87,83 @@ export default function EmployerRegisterPage() {
 					</Typography>
 
 					<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-						{step === 1 ? (
-							<>
-								<TextField
-									name='companyName'
-									label='Название компании'
-									value={formData.companyName}
-									onChange={handleChange}
-									fullWidth
-									sx={{ bgcolor: '#E4EAEF', borderRadius: 1 }}
-								/>
+						<TextField
+							name='companyName'
+							label='Название компании'
+							value={formData.companyName}
+							onChange={handleChange}
+							fullWidth
+							sx={{ bgcolor: '#E4EAEF', borderRadius: 1 }}
+						/>
 
-								<TextField
-									name='website'
-									label='Сайт компании (если есть)'
-									value={formData.website}
-									onChange={handleChange}
-									fullWidth
-									sx={{ bgcolor: '#E4EAEF', borderRadius: 1 }}
-								/>
+						<TextField
+							name='website'
+							label='Сайт компании (если есть)'
+							value={formData.website}
+							onChange={handleChange}
+							fullWidth
+							sx={{ bgcolor: '#E4EAEF', borderRadius: 1 }}
+						/>
 
-								<Button
-									variant='outlined'
-									component='label'
-									sx={{ alignSelf: 'flex-start' }}
-								>
-									Добавить фотографии
-									<input
-										type='file'
-										hidden
-										multiple
-										accept='image/*'
-										onChange={handlePhotoChange}
-									/>
-								</Button>
-
-								<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-									{photoPreviews.map((src, index) => (
-										<Box
-											key={index}
-											sx={{
-												position: 'relative',
-												width: 100,
-												height: 100,
-												borderRadius: 2,
-												overflow: 'hidden',
-												boxShadow: 1,
-											}}
-										>
-											<img
-												src={src}
-												alt={`Фото ${index + 1}`}
-												style={{
-													width: '100%',
-													height: '100%',
-													objectFit: 'cover',
-												}}
-											/>
-											<IconButton
-												size='small'
-												onClick={() => handleRemovePhoto(index)}
-												sx={{
-													position: 'absolute',
-													top: 4,
-													right: 4,
-													backgroundColor: 'rgba(255,255,255,0.7)',
-												}}
-											>
-												<DeleteIcon fontSize='small' />
-											</IconButton>
-										</Box>
-									))}
-								</Box>
-
-								<Button
-									variant='contained'
-									endIcon={<span>➡️</span>}
-									sx={{ alignSelf: 'flex-end', mt: 2 }}
-									onClick={() => setStep(2)}
-								>
-									Продолжить
-								</Button>
-							</>
-						) : (
-							<EmployerJobFormStep
-								onBack={() => setStep(1)}
-								onFinish={() => {
-									// здесь ты можешь обработать или отправить финальные данные
-									console.log('Завершение регистрации работодателя')
-								}}
+						<Button
+							variant='outlined'
+							component='label'
+							sx={{ alignSelf: 'flex-start' }}
+						>
+							Добавить фотографию
+							<input
+								type='file'
+								hidden
+								accept='image/*'
+								onChange={handlePhotoChange}
 							/>
-						)}
+						</Button>
+
+						<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+							{photoPreviews.map((src, index) => (
+								<Box
+									key={index}
+									sx={{
+										position: 'relative',
+										width: 100,
+										height: 100,
+										borderRadius: 2,
+										overflow: 'hidden',
+										boxShadow: 1,
+									}}
+								>
+									<img
+										src={src}
+										alt={`Фото ${index + 1}`}
+										style={{
+											width: '100%',
+											height: '100%',
+											objectFit: 'cover',
+										}}
+									/>
+									<IconButton
+										size='small'
+										onClick={handleRemovePhoto}
+										sx={{
+											position: 'absolute',
+											top: 4,
+											right: 4,
+											backgroundColor: 'rgba(255,255,255,0.7)',
+										}}
+									>
+										<DeleteIcon fontSize='small' />
+									</IconButton>
+								</Box>
+							))}
+						</Box>
+
+						<Button
+							variant='contained'
+							onClick={handleSubmit}
+							sx={{ alignSelf: 'flex-end', mt: 2 }}
+						>
+							Завершить регистрацию
+						</Button>
 					</Box>
 				</Paper>
 			</Paper>

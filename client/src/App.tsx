@@ -11,6 +11,7 @@ import AuthPage from './pages/AuthPage'
 import SelectRolePage from './pages/SelectRolePage'
 import JobSeekerFormPage from './pages/JobSeekerFormPage'
 import EmployerRegisterPage from './pages/EmployerRegisterPage'
+import EmployerJobCreatePage from './pages/EmployerJobCreatePage'
 
 const App = () => {
 	const [token, setToken] = useState<string | null>(null)
@@ -30,6 +31,10 @@ const App = () => {
 				<Route path='/select-role' element={<SelectRolePage />} />
 				<Route path='/register/job-seeker' element={<JobSeekerFormPage />} />
 				<Route path='/register/employer' element={<EmployerRegisterPage />} />
+				<Route
+					path='/employer/create-job'
+					element={<EmployerJobCreatePage />}
+				/>
 
 				{/* Приватные маршруты */}
 				<Route

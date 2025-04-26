@@ -1,11 +1,31 @@
 import { Box, Button, Container, Paper, Typography } from '@mui/material'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import SwipeSwitcher from '../components/SwipeSwitcher'
+import { registerUser } from '../api/useRegister'
 
 export default function SelectRolePage() {
 	const navigate = useNavigate()
+	const location = useLocation()
 	const [role, setRole] = useState<'job_seeker' | 'employer' | null>(null)
+
+	// Получаем email и password, переданные через состояние
+	const { email, password } = location.state || {}
+
+	const handleCompleteRegistration = async () => {
+		if (!role || !email || !password) return
+
+		try {
+			await registerUser(email, password, role)
+			if (role === 'job_seeker') {
+				navigate('/register/job-seeker')
+			} else if (role === 'employer') {
+				navigate('/register/employer')
+			}
+		} catch (error) {
+			console.error('Ошибка при завершении регистрации:', error)
+		}
+	}
 
 	return (
 		<Container
@@ -95,10 +115,7 @@ export default function SelectRolePage() {
 
 					<SwipeSwitcher
 						isLogin={false}
-						setIsLogin={() => {
-							if (role === 'job_seeker') navigate('/register/job-seeker')
-							if (role === 'employer') navigate('/register/employer')
-						}}
+						setIsLogin={handleCompleteRegistration}
 						disabled={!role}
 						label='Продолжить'
 						customSwipe

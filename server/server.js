@@ -15,12 +15,13 @@ app.get('/', (req, res) => {
 })
 
 // Подключение роутов (будем добавлять позже)
-app.use('/api/auth', require('../routes/auth'))
-app.use('/api/profiles', require('../routes/profiles'))
-app.use('/api/employer', require('../routes/employer'))
-app.use('/api/jobseeker', require('../routes/jobSeeker'))
-app.use('/api/chats', require('../routes/chatMessages'))
-app.use('/api/upload', require('../routes/upload'))
+app.use('/api/auth', require('./routes/auth'))
+app.use('/api/profiles', require('./routes/profiles'))
+app.use('/api/employer', require('./routes/employer'))
+app.use('/api/jobseeker', require('./routes/jobSeeker'))
+app.use('/api/chats', require('./routes/chatMessages'))
+app.use('/api/upload', require('./routes/upload'))
+app.use('/api/professions', require('./routes/professions'))
 
 app.listen(port, () => {
 	console.log(`Сервер запущен на порту ${port}`)

@@ -1,28 +1,36 @@
 import { Box, Button, Chip, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
 
+type Skill = {
+	id: number
+	name: string
+}
+
 type Props = {
 	selectedSkills: string[]
 	setSelectedSkills: React.Dispatch<React.SetStateAction<string[]>>
+	skillsOptions: Skill[]
 }
 
 export default function JobSeekerSkillsStep({
 	selectedSkills,
 	setSelectedSkills,
+	skillsOptions,
 }: Props) {
-	const [skills, setSkills] = useState(['JavaScript', 'React', 'HTML', 'CSS'])
 	const [customSkill, setCustomSkill] = useState('')
 
-	const toggleSkill = (skill: string) => {
+	const toggleSkill = (skillName: string) => {
 		setSelectedSkills(prev =>
-			prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
+			prev.includes(skillName)
+				? prev.filter(s => s !== skillName)
+				: [...prev, skillName]
 		)
 	}
 
 	const addCustomSkill = () => {
-		if (customSkill.trim() && !skills.includes(customSkill)) {
-			setSkills(prev => [...prev, customSkill])
-			setSelectedSkills(prev => [...prev, customSkill])
+		const trimmed = customSkill.trim()
+		if (trimmed && !selectedSkills.includes(trimmed)) {
+			setSelectedSkills(prev => [...prev, trimmed])
 			setCustomSkill('')
 		}
 	}
@@ -31,19 +39,40 @@ export default function JobSeekerSkillsStep({
 		<>
 			<Typography sx={{ mb: 1 }}>Выберите навыки</Typography>
 
+			{/* Навыки из БД */}
 			<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-				{skills.map(skill => (
-					<Chip
-						key={skill}
-						label={skill}
-						clickable
-						color={selectedSkills.includes(skill) ? 'primary' : 'default'}
-						onClick={() => toggleSkill(skill)}
-					/>
-				))}
+				{skillsOptions
+					.filter(
+						(skill): skill is Skill =>
+							typeof skill?.id === 'number' && typeof skill?.name === 'string'
+					)
+					.map(skill => (
+						<Chip
+							key={`skill-${skill.id}`}
+							label={skill.name}
+							clickable
+							sx={{ fontSize: '0.9rem' }}
+							color={
+								selectedSkills.includes(skill.name) ? 'primary' : 'default'
+							}
+							onClick={() => toggleSkill(skill.name)}
+						/>
+					))}
+				{selectedSkills
+					.filter(skillName => !skillsOptions.some(s => s.name === skillName))
+					.map(skillName => (
+						<Chip
+							key={`custom-${skillName}`}
+							label={skillName}
+							clickable
+							color='primary'
+							onClick={() => toggleSkill(skillName)}
+						/>
+					))}
 			</Box>
 
-			<Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+			{/* Добавить свой навык */}
+			<Box sx={{ display: 'flex', gap: 1 }}>
 				<TextField
 					variant='outlined'
 					size='small'

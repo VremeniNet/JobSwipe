@@ -16,20 +16,19 @@ export default function AuthPage() {
 	const [password, setPassword] = useState('')
 	const navigate = useNavigate()
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
-
-		if (!email || !password) {
-			alert('Пожалуйста, заполните все поля')
-			return
-		}
-
-		if (!isLogin) {
-			// переход к выбору роли
-			navigate('/select-role', { state: { email, password } })
+		if (isLogin) {
+			// TODO: добавить логин
+			console.log('Вход:', email, password)
 		} else {
-			// TODO: логика входа будет позже
-			alert('Вход пока не реализован')
+			try {
+				navigate('/select-role', {
+					state: { email, password },
+				})
+			} catch (err) {
+				console.error('Ошибка регистрации:', err)
+			}
 		}
 	}
 
