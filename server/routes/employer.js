@@ -72,7 +72,14 @@ router.get('/vacancies', authenticateToken, checkEmployer, async (req, res) => {
 	try {
 		const employerId = req.user.userId
 		const result = await pool.query(
-			`SELECT * FROM vacancies WHERE employer_id = $1 ORDER BY created_at DESC`,
+			`SELECT 
+    v.*,
+    COUNT(jsl.*) AS responses_count
+  FROM vacancies v
+  LEFT JOIN job_seeker_likes jsl ON v.id = jsl.vacancy_id
+  WHERE v.employer_id = $1
+  GROUP BY v.id
+  ORDER BY v.created_at DESC`,
 			[employerId]
 		)
 		res.json(result.rows)

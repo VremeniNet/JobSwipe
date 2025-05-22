@@ -7,7 +7,7 @@ export default function EmployerJobCreatePage() {
 
 	const handleFinish = () => {
 		console.log('Вакансия успешно создана! 🎉')
-		navigate('/employer/dashboard') // Редирект после успешного создания
+		navigate('/employer') // Редирект после успешного создания
 	}
 
 	return (

@@ -119,7 +119,7 @@ export default function JobSeekerProfileForm() {
 		try {
 			const res = await registerJobSeeker(data)
 			console.log('Успешная регистрация!', res.data)
-			navigate('/success') // можно изменить на нужный путь
+			navigate('/jobseeker')
 		} catch (err) {
 			console.error('Ошибка при регистрации:', err)
 		}

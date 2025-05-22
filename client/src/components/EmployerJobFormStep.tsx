@@ -10,15 +10,12 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import { useEffect, useState } from 'react'
 import { createJob } from '../api/employer'
 import { fetchProfessions, fetchPositionsByProfession } from '../api/profession'
-import { useNavigate } from 'react-router-dom'
 
 type Props = {
 	onFinish: () => void
 }
 
 export default function EmployerJobFormStep({ onFinish }: Props) {
-	const navigate = useNavigate()
-
 	const [step, setStep] = useState(1)
 
 	const [formData, setFormData] = useState({

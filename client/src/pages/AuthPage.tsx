@@ -9,6 +9,7 @@ import {
 	Paper,
 } from '@mui/material'
 import SwipeSwitcher from '../components/SwipeSwitcher'
+import { login } from '../api/auth'
 
 export default function AuthPage() {
 	const [isLogin, setIsLogin] = useState(true)
@@ -18,10 +19,28 @@ export default function AuthPage() {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
+
 		if (isLogin) {
-			// TODO: добавить логин
-			console.log('Вход:', email, password)
+			try {
+				const response = await login(email, password)
+				const { token, role } = response.data
+
+				localStorage.setItem('token', token)
+				localStorage.setItem('role', role)
+				// Сохраняем id пользователя тоже
+
+				if (role === 'employer') {
+					navigate('/employer')
+				} else if (role === 'job_seeker') {
+					navigate('/jobseeker')
+				} else {
+					console.error('Неизвестная роль пользователя:', role)
+				}
+			} catch (error) {
+				console.error('Ошибка входа:', error)
+			}
 		} else {
+			// При регистрации перенаправляем на выбор роли
 			try {
 				navigate('/select-role', {
 					state: { email, password },
@@ -61,6 +80,7 @@ export default function AuthPage() {
 					style={{ maxWidth: '100%', maxHeight: '100%' }}
 				/>
 			</Box>
+
 			<Paper sx={{ borderRadius: 4, width: '100%', padding: 2 }}>
 				<Paper
 					elevation={4}
@@ -91,6 +111,7 @@ export default function AuthPage() {
 							fullWidth
 							sx={{ bgcolor: '#E4EAEF', borderRadius: 1 }}
 						/>
+
 						<TextField
 							label='Пароль'
 							type='password'

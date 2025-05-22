@@ -11,3 +11,15 @@ export const registerJobSeeker = async (formData: FormData) => {
 
 	return response
 }
+
+export const fetchVacancies = async () => {
+	const token = localStorage.getItem('token')
+
+	const response = await api.get('/jobseeker/vacancies', {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	})
+
+	return response
+}

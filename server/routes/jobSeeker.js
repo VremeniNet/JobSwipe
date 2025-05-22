@@ -1,9 +1,9 @@
 const express = require('express')
 const router = express.Router()
-const pool = require('../db.js') // Пул подключения к базе данных
+const pool = require('../db.js')
 const authenticateToken = require('../middleware/authenticateToken')
 
-// Middleware для проверки роли соискателя
+// Middleware для роли соискателя
 function checkJobSeeker(req, res, next) {
 	if (req.user.role !== 'job_seeker') {
 		return res
@@ -23,11 +23,30 @@ router.get(
 	checkJobSeeker,
 	async (req, res) => {
 		try {
-			// Можно добавить фильтрацию вакансий, которые уже лайкнул пользователь, если потребуется
 			const result = await pool.query(
-				'SELECT * FROM vacancies ORDER BY created_at DESC'
+				`SELECT 
+				v.id,
+				v.position_name,
+				v.salary,
+				v.description,
+				v.requirements,
+				v.photo,
+				pf.name AS profession_name,
+				ps.name AS position_title
+			FROM vacancies v
+			LEFT JOIN professions pf ON v.profession_id = pf.id
+			LEFT JOIN positions ps ON v.position_id = ps.id
+			ORDER BY v.created_at DESC`
 			)
-			res.json(result.rows)
+
+			const vacancies = result.rows.map(vacancy => ({
+				...vacancy,
+				photo: vacancy.photo
+					? `data:image/jpeg;base64,${vacancy.photo.toString('base64')}`
+					: null,
+			}))
+
+			res.json(vacancies)
 		} catch (error) {
 			console.error('Ошибка при получении вакансий:', error)
 			res.status(500).json({ error: 'Ошибка при получении вакансий' })
@@ -45,13 +64,13 @@ router.post('/like', authenticateToken, checkJobSeeker, async (req, res) => {
 		const jobSeekerId = req.user.userId
 		const { vacancy_id } = req.body
 
-		// Добавляем запись в таблицу лайков соискателя
 		const result = await pool.query(
 			`INSERT INTO job_seeker_likes (job_seeker_id, vacancy_id)
-       VALUES ($1, $2)
-       RETURNING *`,
+			 VALUES ($1, $2)
+			 RETURNING *`,
 			[jobSeekerId, vacancy_id]
 		)
+
 		res.status(201).json(result.rows[0])
 	} catch (error) {
 		console.error('Ошибка при лайке вакансии:', error)
@@ -80,9 +99,6 @@ router.get('/chats', authenticateToken, checkJobSeeker, async (req, res) => {
 /**
  * Получить рекомендованные вакансии для соискателя
  * GET /api/jobseeker/recommendations
- *
- * Здесь можно интегрировать модель SVD для формирования рекомендаций.
- * Пока что для примера возвращается список всех вакансий.
  */
 router.get(
 	'/recommendations',
@@ -90,11 +106,34 @@ router.get(
 	checkJobSeeker,
 	async (req, res) => {
 		try {
-			// Заготовка для интеграции алгоритма рекомендаций
+			// Пока просто все вакансии, позже сюда можно вставить рекомендательную логику
 			const result = await pool.query(
-				'SELECT * FROM vacancies ORDER BY created_at DESC'
+				`SELECT 
+		v.id,
+		v.position_name,
+		v.salary,
+		v.description,
+		v.requirements,
+		v.photo,
+		pf.name AS profession_name,
+		ps.name AS position_title,
+		ep.company_name,
+		ep.website
+	FROM vacancies v
+	LEFT JOIN professions pf ON v.profession_id = pf.id
+	LEFT JOIN positions ps ON v.position_id = ps.id
+	LEFT JOIN employer_profiles ep ON v.employer_id = ep.user_id
+	ORDER BY v.created_at DESC`
 			)
-			res.json(result.rows)
+
+			const vacancies = result.rows.map(vacancy => ({
+				...vacancy,
+				photo: vacancy.photo
+					? `data:image/jpeg;base64,${vacancy.photo.toString('base64')}`
+					: null,
+			}))
+
+			res.json(vacancies)
 		} catch (error) {
 			console.error('Ошибка при получении рекомендаций:', error)
 			res.status(500).json({ error: 'Ошибка при получении рекомендаций' })
